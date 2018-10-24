@@ -1,0 +1,42 @@
+{
+  "name": "pigeon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "mkdir -p dist && src/server/bundle.js > dist/bundle.js",
+    "start": "node src/server/index.js",
+    "lint": "npm run prettier -- -l || (echo \"\\n\\trun 'npm run fmt' to prettify before lint\\n\" && exit 1) && npm run eslint",
+    "fmt": "npm run prettier -- --write",
+    "prettier": "prettier \"src/**/*.js\"",
+    "eslint": "eslint \"src/**/*.js\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Anton Verinov <anton@verinov.com>",
+  "license": "ISC",
+  "dependencies": {
+    "emotion": "^9.2.12",
+    "react": "^16.5.2",
+    "react-dom": "^16.5.2",
+    "react-server": "^0.8.1"
+  },
+  "devDependencies": {
+    "eslint": "^5.7.0",
+    "prettier": "^1.14.3",
+    "tape": "^4.9.1"
+  },
+  "eslintConfig": {
+    "extends": "eslint:recommended",
+    "env": {
+      "browser": true,
+      "es6": true,
+      "node": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 9
+    },
+    "rules": {
+      "no-console": 1
+    }
+  }
+}
