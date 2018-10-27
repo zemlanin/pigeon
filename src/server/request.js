@@ -3,6 +3,10 @@ const { promisify } = require("util");
 
 const API_KEY = process.env.API_KEY;
 
+if (!API_KEY) {
+  throw new Error("pigeon needs `API_KEY` in env")
+}
+
 module.exports = async function httpRequest(
   path,
   method = "GET",
