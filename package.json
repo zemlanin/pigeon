@@ -17,8 +17,7 @@
   "dependencies": {
     "emotion": "^9.2.12",
     "react": "^16.5.2",
-    "react-dom": "^16.5.2",
-    "react-server": "^0.8.1"
+    "react-dom": "^16.5.2"
   },
   "devDependencies": {
     "eslint": "^5.7.0",
