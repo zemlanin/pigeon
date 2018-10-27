@@ -19,7 +19,7 @@ const Footer = props =>
       "Send messages to ",
       h("a", { href: "sms:+" + props.sharedPhone }, "+" + props.sharedPhone)
     ),
-    h("a", { href: "https://anton.codes/", target: "_blank" }, "Anton Verinov")
+    h("a", { href: "https://github.com/zemlanin/pigeon", target: "_blank" }, "src")
   );
 
 module.exports = Footer;
