@@ -4,22 +4,193 @@ const h = React.createElement;
 const ReactDOM = require("react-dom");
 const emotion = require("emotion");
 
-const red = emotion.css`
-  color: red;
+const wrapper = emotion.css`
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  @font-face {
+    font-family: Lota;
+    src: url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-Regular.otf") format("otf"),url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-Regular.woff2") format("woff2"),url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-Regular.woff") format("woff");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+  }
+  @font-face{
+    font-family: Lota;
+    src: url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-SemiBold.otf") format("otf"),url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-SemiBold.woff2") format("woff2"),url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-SemiBold.woff") format("woff");
+    font-weight: 600;
+    font-style: normal;
+    font-display: block;
+  }
+  font-family: Lota,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  display: flex;
+  min-height: 100%;
+  flex-flow: column;
+  box-sizing: border-box;
 `;
 
-const model = {
-  messages: [],
-  phoneHash: ""
-};
+const { InputForm } = require("./input-form.js");
+const PhoneLogin = require("./phone-login.js");
+const PhoneExit = require("./phone-exit.js");
+const MessageForm = require("./message-form.js");
+const MessageList = require("./message-list.js");
+const Footer = require("./footer.js");
 
-const messagesSource = new EventSource('/message-events?r='+(Math.random()));
-messagesSource.addEventListener("ticker", e => ReactDOM.render(
-  h("h1", { class: red }, e.data),
-  document.getElementById("app")
-), false)
+const AppContext = React.createContext();
 
-ReactDOM.render(
-  h("h1", { class: red }, "pigeon"),
-  document.getElementById("app")
-);
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      phone: "",
+      sharedPhone: "",
+      inputs: {
+        phone: localStorage.getItem("lastPhone") || "",
+        message: ""
+      },
+      messages: [],
+      eventSource: null,
+
+      onInput: (key, value) => {
+        if (key === "phone" || key === "message") {
+          this.setState({
+            inputs: {
+              ...this.state.inputs,
+              [key]: value
+            }
+          });
+        }
+      },
+      login: async phone => {
+        return fetch(`/messages?phone=${phone}`)
+          .then(resp => resp.json())
+          .then(resp => {
+            if (resp.messages) {
+              const eventSource = new EventSource(
+                "/message-events?phone=" + resp.phone
+              );
+              eventSource.addEventListener(
+                "newMessage",
+                e => {
+                  let messages = [JSON.parse(e.data), ...this.state.messages];
+
+                  messages.sort((a, b) => {
+                    if (a.createdDatetime > b.createdDatetime) {
+                      return -1;
+                    }
+
+                    if (a.createdDatetime < b.createdDatetime) {
+                      return 1;
+                    }
+
+                    return 0;
+                  });
+
+                  this.setState({ messages: messages });
+                },
+                false
+              );
+
+              return this.setState(
+                {
+                  phone: resp.phone,
+                  messages: resp.messages || [],
+                  sharedPhone: resp.sharedPhone,
+                  eventSource: eventSource
+                },
+                () => {
+                  localStorage.setItem("lastPhone", phone);
+                }
+              );
+            }
+
+            this.setState({
+              inputs: {
+                phone: resp.phone || ""
+              }
+            });
+          });
+      },
+      exit: async () => {
+        if (this.state.eventSource) {
+          this.state.eventSource.close();
+        }
+
+        this.setState(
+          {
+            phone: null,
+            eventSource: null,
+            inputs: {
+              phone: this.state.phone
+            },
+            messages: []
+          },
+          () => {
+            localStorage.removeItem("lastPhone");
+          }
+        );
+      },
+      send: async message => {
+        if (!message || !message.trim()) {
+          return;
+        }
+
+        return fetch(`/message`, {
+          method: "POST",
+          body: `phone=${this.state.phone}&message=${encodeURIComponent(
+            message
+          )}`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        })
+          .then(() => fetch(`/messages?phone=${this.state.phone}`))
+          .then(resp => resp.json())
+          .then(resp =>
+            this.setState({
+              inputs: {
+                message: ""
+              },
+              messages: resp.messages
+            })
+          );
+      }
+    };
+  }
+
+  render() {
+    return h(
+      AppContext.Provider,
+      { value: this.state },
+      h(
+        "div",
+        {
+          class: wrapper
+        },
+        h(
+          AppContext.Consumer,
+          {},
+          context =>
+            context.phone ? h(PhoneExit, context) : h(PhoneLogin, context)
+        ),
+        h(
+          AppContext.Consumer,
+          {},
+          context => (context.phone ? h(MessageForm, context) : null)
+        ),
+        h(
+          AppContext.Consumer,
+          {},
+          context => (context.phone ? h(MessageList, context) : null)
+        ),
+        h(
+          AppContext.Consumer,
+          {},
+          context => (context.phone ? h(Footer, context) : null)
+        )
+      )
+    );
+  }
+}
+
+ReactDOM.render(h(App, {}), document.getElementById("app"));

@@ -1,28 +1,69 @@
+const url = require("url");
+
+// {"phone": [ (data) => null ]}
+const openedConnectionCallbacks = {};
+
+function cleanUp(phone, callback) {
+  if (!openedConnectionCallbacks[phone]) {
+    return;
+  }
+
+  openedConnectionCallbacks[phone] = openedConnectionCallbacks[phone].filter(
+    cb => cb != callback
+  );
+}
+
 module.exports = async function messages(req, res) {
-  // const r = Math.random()
-  const r = req.url.split("?")[1]
+  const query = url.parse(req.url, true).query;
+  const phone = query.phone.replace(/[^0-9]/gi, "");
+
+  if (!phone) {
+    res.end(404);
+    return;
+  }
 
   res.writeHead(200, {
-    Connection: 'keep-alive',
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache'
+    Connection: "keep-alive",
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache"
   });
 
-  let id = 0;
-  let closed = false
+  let closed = false;
 
-  req.on('close', function(err) { console.error(err); closed = true })
-  console.log(req.headers["user-agent"])
+  req.on("close", function(err) {
+    closed = true;
+  });
+
+  const callback = data => {
+    if (req.aborted || closed) {
+      cleanUp(phone, callback);
+      return;
+    }
+
+    res.write(`event: newMessage\ndata: ${JSON.stringify(data)}`);
+    res.write("\n\n");
+  };
+
+  openedConnectionCallbacks[phone] = openedConnectionCallbacks[phone] || [];
+  openedConnectionCallbacks[phone].push(callback);
+
+  const keepingAliveCheck = (resolve, reject) => {
+    if (req.aborted || closed) {
+      res.end();
+      cleanUp(phone, callback);
+      return reject(new Error("Connection's Dead"));
+    }
+
+    setTimeout(resolve, 1000);
+  };
 
   while (1) {
-    if (req.aborted || closed) {
-      res.end()
-      return
+    try {
+      await new Promise(keepingAliveCheck);
+    } catch (e) {
+      return;
     }
-    res.write(`event: ticker\nid: ${id}\ndata:This is event ${id}.`)
-    res.write("\n\n")
-    console.log(r, id)
-    id++;
-    await new Promise(r => setTimeout(r, 1000))
   }
-}
+};
+
+module.exports.openedConnectionCallbacks = openedConnectionCallbacks;

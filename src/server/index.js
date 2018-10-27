@@ -16,10 +16,19 @@ const handlers = {
       h(
         "html",
         null,
-        h("head"),
+        h(
+          "head",
+          {},
+          h("title", {}, "pigeon"),
+          h("meta", { charSet: "utf-8" }),
+          h("meta", {
+            name: "viewport",
+            content: "width=device-width, initial-scale=1"
+          })
+        ),
         h(
           "body",
-          null,
+          { style: { backgroundColor: "#f6fafd" } },
           h("div", { id: "app" }),
           h("script", {
             type: "text/javascript",
@@ -31,11 +40,11 @@ const handlers = {
   },
   "GET /messages": require("./messages.js"),
   "GET /message-events": require("./message-events.js"),
-  // "POST /message": require("./message-post.js"),
-  // "POST /webhook": require("./webhook.js"),
+  "POST /message": require("./message-post.js"),
+  "POST /webhook": require("./webhook.js")
 };
 
-async function processPost(request, response) {
+async function processPost(request, response, parse) {
   let queryData = "";
   return new Promise((resolve, reject) => {
     request.on("data", function(data) {
@@ -49,7 +58,7 @@ async function processPost(request, response) {
     });
 
     request.on("end", function() {
-      request.post = querystring.parse(queryData);
+      request.post = parse(queryData);
       resolve(request.post);
     });
   });
@@ -77,11 +86,18 @@ const server = http.createServer((req, res) => {
 
     if (
       req.method === "POST" &&
-      req.headers["content-type"] === "application/x-www-form-urlencoded"
+      (req.headers["content-type"] === "application/x-www-form-urlencoded" ||
+        req.headers["content-type"] === "application/json")
     ) {
       const ogHandler = handler;
       handler = async () => {
-        await processPost(req, res);
+        await processPost(
+          req,
+          res,
+          req.headers["content-type"] === "application/x-www-form-urlencoded"
+            ? querystring.parse
+            : JSON.parse
+        );
         return ogHandler(req, res);
       };
     }

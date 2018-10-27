@@ -19,9 +19,9 @@ const CJS_MODULES = {
 };
 
 function wrapCJS(name, body) {
-  return `require.cache[${JSON.stringify(
-    name
-  )}]=function(require,exports,module){${body}};`;
+  const jsonName = JSON.stringify(name);
+  const pathName = JSON.stringify("./" + name);
+  return `require.cache[${pathName}]=require.cache[${jsonName}]=function(require,exports,module){${body}};`;
 }
 
 let cachedBundle = "";
@@ -35,7 +35,7 @@ async function createClientBundle() {
 
   for (const name in CJS_MODULES) {
     loadedModules.push(
-      wrapCJS(name, (await fsPromises.readFile(CJS_MODULES[name])).toString())
+      wrapCJS(name, (await fsPromises.readFile(CJS_MODULES[name])).toString().replace(/^\/\/# sourceMappingURL=.*$/gm, ""))
     );
   }
 
