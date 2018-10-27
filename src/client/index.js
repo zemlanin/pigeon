@@ -50,6 +50,7 @@ class App extends React.Component {
       },
       messages: [],
       eventSource: null,
+      refreshInterval: null,
 
       onInput: (key, value) => {
         if (key === "phone" || key === "message") {
@@ -91,12 +92,25 @@ class App extends React.Component {
                 false
               );
 
+              const refreshInterval = setInterval(() => {
+                fetch(`/messages?phone=${phone}`)
+                  .then(resp => resp.json())
+                  .then(resp => {
+                    if (!resp.messages) {
+                      return
+                    }
+
+                    this.setState({ messages: resp.messages });
+                  })
+              }, 10000)
+
               return this.setState(
                 {
                   phone: resp.phone,
                   messages: resp.messages || [],
                   sharedPhone: resp.sharedPhone,
-                  eventSource: eventSource
+                  eventSource: eventSource,
+                  refreshInterval: refreshInterval,
                 },
                 () => {
                   localStorage.setItem("lastPhone", phone);
@@ -116,10 +130,15 @@ class App extends React.Component {
           this.state.eventSource.close();
         }
 
+        if (this.state.refreshInterval) {
+          clearInterval(refreshInterval)
+        }
+
         this.setState(
           {
             phone: null,
             eventSource: null,
+            refreshInterval: null,
             inputs: {
               phone: this.state.phone
             },
@@ -144,15 +163,20 @@ class App extends React.Component {
             "Content-Type": "application/x-www-form-urlencoded"
           }
         })
-          .then(() => fetch(`/messages?phone=${this.state.phone}`))
-          .then(resp => resp.json())
-          .then(resp =>
+          // API lags a bit and I don't have time to write a proper fix
+          .then(resp => {
             this.setState({
               inputs: {
                 message: ""
               },
-              messages: resp.messages
+              messages: [{
+                id: "fake",
+                createdDatetime: (new Date).toISOString().replace(/Z$/, "+00:00"),
+                message: message,
+                direction: "mt",
+              }, ...this.state.messages]
             })
+          }
           );
       }
     };
