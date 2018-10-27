@@ -30,7 +30,7 @@ module.exports = async function messages(req, res) {
 
   let closed = false;
 
-  req.on("close", function(err) {
+  req.on("close", function() {
     closed = true;
   });
 

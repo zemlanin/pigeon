@@ -1,6 +1,6 @@
 const { openedConnectionCallbacks } = require("./message-events.js");
 
-module.exports = async function webhook(req, res) {
+module.exports = async function webhook(req) {
   const phone = req.post.originator;
   const message = req.post.body;
 

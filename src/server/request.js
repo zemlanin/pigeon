@@ -1,10 +1,9 @@
 const https = require("https");
-const { promisify } = require("util");
 
 const API_KEY = process.env.API_KEY;
 
 if (!API_KEY) {
-  throw new Error("pigeon needs `API_KEY` in env")
+  throw new Error("pigeon needs `API_KEY` in env");
 }
 
 module.exports = async function httpRequest(
@@ -12,7 +11,7 @@ module.exports = async function httpRequest(
   method = "GET",
   postData = ""
 ) {
-  params = {
+  const params = {
     hostname: "rest.messagebird.com",
     port: "443",
     path: path,

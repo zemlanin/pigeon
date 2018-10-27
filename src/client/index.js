@@ -29,7 +29,6 @@ const wrapper = emotion.css`
   box-sizing: border-box;
 `;
 
-const { InputForm } = require("./input-form.js");
 const PhoneLogin = require("./phone-login.js");
 const PhoneExit = require("./phone-exit.js");
 const MessageForm = require("./message-form.js");
@@ -97,12 +96,12 @@ class App extends React.Component {
                   .then(resp => resp.json())
                   .then(resp => {
                     if (!resp.messages) {
-                      return
+                      return;
                     }
 
                     this.setState({ messages: resp.messages });
-                  })
-              }, 10000)
+                  });
+              }, 10000);
 
               return this.setState(
                 {
@@ -110,7 +109,7 @@ class App extends React.Component {
                   messages: resp.messages || [],
                   sharedPhone: resp.sharedPhone,
                   eventSource: eventSource,
-                  refreshInterval: refreshInterval,
+                  refreshInterval: refreshInterval
                 },
                 () => {
                   localStorage.setItem("lastPhone", phone);
@@ -131,7 +130,7 @@ class App extends React.Component {
         }
 
         if (this.state.refreshInterval) {
-          clearInterval(refreshInterval)
+          clearInterval(this.state.refreshInterval);
         }
 
         this.setState(
@@ -154,30 +153,36 @@ class App extends React.Component {
           return;
         }
 
-        return fetch(`/message`, {
-          method: "POST",
-          body: `phone=${this.state.phone}&message=${encodeURIComponent(
-            message
-          )}`,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          }
-        })
-          // API lags a bit and I don't have time to write a proper fix
-          .then(resp => {
-            this.setState({
-              inputs: {
-                message: ""
-              },
-              messages: [{
-                id: "fake",
-                createdDatetime: (new Date).toISOString().replace(/Z$/, "+00:00"),
-                message: message,
-                direction: "mt",
-              }, ...this.state.messages]
+        return (
+          fetch(`/message`, {
+            method: "POST",
+            body: `phone=${this.state.phone}&message=${encodeURIComponent(
+              message
+            )}`,
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded"
+            }
+          })
+            // API lags a bit and I don't have time to write a proper fix
+            .then(() => {
+              this.setState({
+                inputs: {
+                  message: ""
+                },
+                messages: [
+                  {
+                    id: "fake",
+                    createdDatetime: new Date()
+                      .toISOString()
+                      .replace(/Z$/, "+00:00"),
+                    message: message,
+                    direction: "mt"
+                  },
+                  ...this.state.messages
+                ]
+              });
             })
-          }
-          );
+        );
       }
     };
   }

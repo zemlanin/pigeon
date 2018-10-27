@@ -1,6 +1,5 @@
 const fs = require("fs");
 const { promisify } = require("util");
-const os = require("os");
 const path = require("path");
 
 const fsPromises = {
@@ -35,7 +34,12 @@ async function createClientBundle() {
 
   for (const name in CJS_MODULES) {
     loadedModules.push(
-      wrapCJS(name, (await fsPromises.readFile(CJS_MODULES[name])).toString().replace(/^\/\/# sourceMappingURL=.*$/gm, ""))
+      wrapCJS(
+        name,
+        (await fsPromises.readFile(CJS_MODULES[name]))
+          .toString()
+          .replace(/^\/\/# sourceMappingURL=.*$/gm, "")
+      )
     );
   }
 

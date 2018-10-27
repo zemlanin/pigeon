@@ -8,7 +8,7 @@ if (ORIGINATOR_PHONE) {
 }
 
 if (!ORIGINATOR_PHONE) {
-  throw new Error("pigeon needs `ORIGINATOR_PHONE` in env")
+  throw new Error("pigeon needs `ORIGINATOR_PHONE` in env");
 }
 
 module.exports = async function messagePost(req, res) {
