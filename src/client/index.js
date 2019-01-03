@@ -8,21 +8,7 @@ const wrapper = emotion.css`
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  @font-face {
-    font-family: Lota;
-    src: url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-Regular.otf") format("otf"),url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-Regular.woff2") format("woff2"),url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-Regular.woff") format("woff");
-    font-weight: 400;
-    font-style: normal;
-    font-display: block;
-  }
-  @font-face{
-    font-family: Lota;
-    src: url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-SemiBold.otf") format("otf"),url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-SemiBold.woff2") format("woff2"),url("https://cdn.messagebird.com/assets/fonts/LotaGrotesque-SemiBold.woff") format("woff");
-    font-weight: 600;
-    font-style: normal;
-    font-display: block;
-  }
-  font-family: Lota,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
   display: flex;
   min-height: 100%;
   flex-flow: column;
